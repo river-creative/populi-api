@@ -143,9 +143,17 @@ pinned to whichever window it started in.
 `utilisation` has no default. The allowance belongs to the key, not to one caller, so a caller
 states the share it is taking rather than taking all of it by omission.
 
-## Licence
+## Licence and contributing
 
-MIT. See [LICENSE](LICENSE).
+Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE). Use it for anything, including
+commercially and in closed-source work.
+
+Contributions are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Apache-2.0 was chosen over MIT
+for one specific reason: its section 5 says contributions are under the same terms unless stated
+otherwise, so contributing needs no separate agreement and no ambiguity about what was granted. It
+also carries an explicit patent grant, which MIT is silent on.
+
+Not affiliated with or endorsed by Populi.
 
 ## Tests
 
