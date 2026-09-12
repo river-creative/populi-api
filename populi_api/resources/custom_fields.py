@@ -12,7 +12,7 @@ wrong scope does not error, it returns **no rows** — and code that treats
 absence as "not set" then writes over what it failed to see. Ten of the twelve
 fields this application uses are ``admissions``; one is ``campuslife``.
 
-**2. A checkbox write REPLACES the whole selection.** Measured on field 212516
+**2. A checkbox write REPLACES the whole selection.** Measured on field 900010
 with three options selected: POSTing a single option id left **one** row, not
 four. POSTing the full array set exactly that array. So "tick one more box" is
 read-the-current-set, append, and POST the whole array — never POST the one

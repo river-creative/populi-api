@@ -18,7 +18,7 @@ Typical use::
     ))
 
     person = populi.people.by_student_id('101')
-    populi.tags.add(person['id'], 471893)
+    populi.tags.add(person['id'], 700010)
 
 In this project, use ``populi_api.integration.django.get_populi()`` instead,
 which builds the same object from Django settings.

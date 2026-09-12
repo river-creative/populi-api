@@ -1,9 +1,11 @@
 # populi-api
 
-Shared [Populi API2](https://populi.co/api/) client for RMI **Python** applications —
-the sibling of the .NET [`Populi.Client`](https://github.com/river-creative/Populi.Client)
-and the TypeScript `mp-api`. It mirrors the .NET client's contract deliberately, so a lesson
-learned in one transfers to the other rather than having to be learned twice.
+A Populi API2 client for Python.
+
+Populi's API fails open in a number of places — a request it cannot read is answered with
+HTTP 200 and quietly ignored. This client is built around that: the behaviours documented
+below were each a defect before they were a paragraph, measured against a live instance
+rather than read in the reference.
 
 ## Install
 
@@ -12,8 +14,7 @@ pip install "populi-api @ git+https://github.com/river-creative/populi-py.git@<s
 ```
 
 Pin a commit, not a branch. A branch reference silently changes the dependency on any rebuild,
-which is how the project this was extracted from ended up unable to say which client it was
-running.
+which makes a build unable to say which version of a dependency it is running.
 
 ## Use
 
@@ -28,8 +29,8 @@ populi = Populi(PopuliClient(
 ))
 
 person = populi.people.by_student_id("101")
-populi.tags.add(person["id"], 471893)
-populi.custom_fields.add_option(person["id"], 212516, "admissions", 458237)
+populi.tags.add(person["id"], 700010)
+populi.custom_fields.add_option(person["id"], 900010, "admissions", 500010)
 ```
 
 Resource groups: `people`, `tags`, `custom_fields`, `leads`, `communication_plans`, `notes`.
@@ -51,9 +52,9 @@ That is what makes this package portable, and it is worth keeping true.
 Every item below was measured against a live instance, not read in the documentation, and each
 one succeeds as far as the caller can see while doing nothing it was asked to do.
 
-- **Adding a tag that does not exist returns success.** No error, no effect. Two stale ids sat in
-  a consuming application's config for an unknown length of time, one of which meant a whole
-  category of applicant silently never received a required tag. There is no guard available at
+- **Adding a tag that does not exist returns success.** No error, no effect. A stale id in a caller's config is not an
+  error anywhere — it is an automation that silently stops applying a tag, for as long as nobody
+  notices the absence. There is no guard available at
   write time — validate ids against `GET /tags`.
 - **A checkbox write REPLACES the whole selection.** POSTing one option id to a field holding
   three leaves one row, not four. `add_option` reads the current set and posts the complete

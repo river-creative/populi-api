@@ -1,7 +1,7 @@
 """Notes on a person's profile.
 
 This is the API2 home of the legacy ``addActivityFeedNote``, and that mapping is
-**proven rather than inferred**. ``GET /people/4605662/notes`` returns a note
+**proven rather than inferred**. ``GET /people/1001/notes`` returns a note
 dated 2024-03-25 whose content is::
 
     #🔰 Background Check Status#

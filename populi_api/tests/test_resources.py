@@ -31,12 +31,12 @@ class Tags(unittest.TestCase):
         """The documented GET returns 200 and the tag list, and adds nothing."""
         populi, session = make([FakeResponse(200, {})])
 
-        populi.tags.add(4605662, 471893)
+        populi.tags.add(1001, 700010)
 
         call = session.calls[0]
         self.assertEqual(call['method'], 'POST')
-        self.assertTrue(call['url'].endswith('people/4605662/tags/add'))
-        self.assertEqual(call['json'], {'tag_id': 471893})
+        self.assertTrue(call['url'].endswith('people/1001/tags/add'))
+        self.assertEqual(call['json'], {'tag_id': 700010})
 
     def test_already_added_is_success_not_failure(self):
         """Populi's refusal to add twice is the authoritative 'it is there'.
@@ -48,7 +48,7 @@ class Tags(unittest.TestCase):
             [FakeResponse(400, error_body(code=400, message='Tag already added'))]
         )
 
-        self.assertTrue(populi.tags.add(4605662, 471893))
+        self.assertTrue(populi.tags.add(1001, 700010))
 
     def test_a_different_400_still_raises(self):
         populi, _ = make(
@@ -56,12 +56,12 @@ class Tags(unittest.TestCase):
         )
 
         with self.assertRaises(PopuliApiError):
-            populi.tags.add(4605662, 999)
+            populi.tags.add(1001, 999)
 
     def test_removing_a_tag_that_is_absent_is_not_an_error(self):
         populi, _ = make([FakeResponse(404, error_body(code=404, message='not found'))])
 
-        self.assertTrue(populi.tags.remove(4605662, 471893))
+        self.assertTrue(populi.tags.remove(1001, 700010))
 
 
 def row(row_id, field_id, value):
@@ -142,25 +142,25 @@ class CustomFieldWrites(unittest.TestCase):
     """
 
     def test_add_option_posts_the_whole_set_not_just_the_new_one(self):
-        existing = [row(11, 212516, 458238), row(22, 212516, 458620)]
+        existing = [row(11, 900010, 500020), row(22, 900010, 500030)]
         fields, session = custom_fields(
             [
                 FakeResponse(200, list_body(existing, results=2)),   # read current
                 FakeResponse(200, {}),                               # write
                 FakeResponse(200, list_body(                          # verify
-                    existing + [row(33, 212516, 458237)], results=3
+                    existing + [row(33, 900010, 500010)], results=3
                 )),
             ]
         )
 
-        fields.add_option(4605662, 212516, 'admissions', 458237)
+        fields.add_option(1001, 900010, 'admissions', 500010)
 
         write = session.calls[1]
         self.assertEqual(write['method'], 'POST')
-        self.assertTrue(write['url'].endswith('people/4605662/custominfodata/admissions'))
-        # The complete set. Posting just 458237 would leave it the ONLY option.
+        self.assertTrue(write['url'].endswith('people/1001/custominfodata/admissions'))
+        # The complete set. Posting just 500010 would leave it the ONLY option.
         self.assertEqual(
-            sorted(write['json']['value']), sorted(['458238', '458620', '458237'])
+            sorted(write['json']['value']), sorted(['500020', '500030', '500010'])
         )
 
     def test_a_single_existing_option_is_still_preserved(self):
@@ -171,54 +171,54 @@ class CustomFieldWrites(unittest.TestCase):
         """
         fields, session = custom_fields(
             [
-                FakeResponse(200, list_body([row(11, 212516, 458238)], results=1)),
+                FakeResponse(200, list_body([row(11, 900010, 500020)], results=1)),
                 FakeResponse(200, {}),
                 FakeResponse(200, list_body(
-                    [row(11, 212516, 458238), row(22, 212516, 458237)], results=2
+                    [row(11, 900010, 500020), row(22, 900010, 500010)], results=2
                 )),
             ]
         )
 
-        fields.add_option(4605662, 212516, 'admissions', 458237)
+        fields.add_option(1001, 900010, 'admissions', 500010)
 
         self.assertEqual(
-            sorted(session.calls[1]['json']['value']), sorted(['458238', '458237'])
+            sorted(session.calls[1]['json']['value']), sorted(['500020', '500010'])
         )
 
     def test_add_option_already_present_writes_nothing(self):
         fields, session = custom_fields(
-            [FakeResponse(200, list_body([row(11, 212516, 458237)], results=1))]
+            [FakeResponse(200, list_body([row(11, 900010, 500010)], results=1))]
         )
 
-        self.assertFalse(fields.add_option(4605662, 212516, 'admissions', 458237))
+        self.assertFalse(fields.add_option(1001, 900010, 'admissions', 500010))
         self.assertEqual(len(session.calls), 1)
 
     def test_remove_option_posts_the_remaining_set(self):
         fields, session = custom_fields(
             [
                 FakeResponse(200, list_body(
-                    [row(11, 212516, 458238), row(22, 212516, 458237)], results=2
+                    [row(11, 900010, 500020), row(22, 900010, 500010)], results=2
                 )),
                 FakeResponse(200, {}),
-                FakeResponse(200, list_body([row(11, 212516, 458238)], results=1)),
+                FakeResponse(200, list_body([row(11, 900010, 500020)], results=1)),
             ]
         )
 
-        fields.remove_option(4605662, 212516, 'admissions', 458237)
+        fields.remove_option(1001, 900010, 'admissions', 500010)
 
-        self.assertEqual(session.calls[1]['json']['value'], ['458238'])
+        self.assertEqual(session.calls[1]['json']['value'], ['500020'])
 
     def test_removing_the_last_option_deletes_the_rows(self):
         """An empty array is not a documented way to clear a field."""
         fields, session = custom_fields(
             [
-                FakeResponse(200, list_body([row(11, 212516, 458237)], results=1)),
-                FakeResponse(200, list_body([row(11, 212516, 458237)], results=1)),
+                FakeResponse(200, list_body([row(11, 900010, 500010)], results=1)),
+                FakeResponse(200, list_body([row(11, 900010, 500010)], results=1)),
                 FakeResponse(200, {}),
             ]
         )
 
-        fields.remove_option(4605662, 212516, 'admissions', 458237)
+        fields.remove_option(1001, 900010, 'admissions', 500010)
 
         deletes = [c for c in session.calls if c['method'] == 'DELETE']
         self.assertEqual(len(deletes), 1)
@@ -229,22 +229,22 @@ class CustomFieldWrites(unittest.TestCase):
             [
                 # A single-valued write does not read first -- it replaces.
                 FakeResponse(200, {}),                                # write
-                FakeResponse(200, list_body([row(1, 212554, 458576)], results=1)),
+                FakeResponse(200, list_body([row(1, 900030, 500050)], results=1)),
             ],
             input_type='select',
         )
 
-        fields.set_value(4605662, 212554, 'admissions', 458576)
+        fields.set_value(1001, 900030, 'admissions', 500050)
 
         # The write is the FIRST call here: a single-valued field replaces
         # outright, so nothing is read beforehand.
-        self.assertEqual(session.calls[0]['json']['value'], 458576)
+        self.assertEqual(session.calls[0]['json']['value'], 500050)
 
     def test_several_values_on_a_single_valued_field_is_refused(self):
         fields, session = custom_fields([], input_type='radio')
 
         with self.assertRaises(PopuliApiError):
-            fields.set_options(4605662, 212510, 'admissions', [1, 2])
+            fields.set_options(1001, 900020, 'admissions', [1, 2])
 
         self.assertEqual(session.calls, [])
 
@@ -255,20 +255,20 @@ class CustomFieldWrites(unittest.TestCase):
         )
 
         with self.assertRaises(PopuliApiError):
-            fields.set_value(4605662, 999999, 'admissions', 'x')
+            fields.set_value(1001, 999999, 'admissions', 'x')
 
     def test_delete_removes_every_row_in_the_right_scope(self):
         fields, session = custom_fields(
             [
                 FakeResponse(200, list_body(
-                    [row(11, 212516, 458238), row(22, 212516, 458237)], results=2
+                    [row(11, 900010, 500020), row(22, 900010, 500010)], results=2
                 )),
                 FakeResponse(200, {}),
                 FakeResponse(200, {}),
             ]
         )
 
-        self.assertTrue(fields.delete(4605662, 212516, 'admissions'))
+        self.assertTrue(fields.delete(1001, 900010, 'admissions'))
 
         deletes = [c for c in session.calls if c['method'] == 'DELETE']
         self.assertEqual(len(deletes), 2)
@@ -285,7 +285,7 @@ class CustomFieldWrites(unittest.TestCase):
         )
 
         with self.assertRaises(PopuliApiError) as caught:
-            fields.set_value(4605662, 212554, 'admissions', 'x')
+            fields.set_value(1001, 900030, 'admissions', 'x')
 
         self.assertEqual(caught.exception.populi_type, 'write_not_applied')
 
@@ -301,7 +301,7 @@ class CustomFieldWrites(unittest.TestCase):
             [
                 FakeResponse(200, {}),                                # write
                 FakeResponse(200, list_body([{                        # verify
-                    'id': 1, 'custom_info_field_id': 212510,
+                    'id': 1, 'custom_info_field_id': 900020,
                     'value': '458178', 'option_value': 'In Progress',
                 }], results=1)),
             ],
@@ -310,7 +310,7 @@ class CustomFieldWrites(unittest.TestCase):
 
         # Must not raise: the label written is the label stored.
         self.assertTrue(
-            fields.set_value(4605662, 212510, 'admissions', 'In Progress')
+            fields.set_value(1001, 900020, 'admissions', 'In Progress')
         )
 
     def test_a_write_that_lands_as_neither_id_nor_label_still_raises(self):
@@ -318,7 +318,7 @@ class CustomFieldWrites(unittest.TestCase):
             [
                 FakeResponse(200, {}),
                 FakeResponse(200, list_body([{
-                    'id': 1, 'custom_info_field_id': 212510,
+                    'id': 1, 'custom_info_field_id': 900020,
                     'value': '999999', 'option_value': 'Something Else',
                 }], results=1)),
             ],
@@ -326,27 +326,27 @@ class CustomFieldWrites(unittest.TestCase):
         )
 
         with self.assertRaises(PopuliApiError):
-            fields.set_value(4605662, 212510, 'admissions', 'In Progress')
+            fields.set_value(1001, 900020, 'admissions', 'In Progress')
 
     def test_get_values_returns_every_selected_option(self):
         fields, _ = custom_fields(
             [FakeResponse(200, list_body(
-                [row(11, 212516, 458238), row(22, 212516, 458237)], results=2
+                [row(11, 900010, 500020), row(22, 900010, 500010)], results=2
             ))]
         )
 
         self.assertEqual(
-            fields.get_values(4605662, 212516, 'admissions'), ['458238', '458237']
+            fields.get_values(1001, 900010, 'admissions'), ['500020', '500010']
         )
 
 
 class People(unittest.TestCase):
     def test_by_student_id_returns_the_person(self):
-        populi, session = make([FakeResponse(200, {'object': 'person', 'id': 4605662})])
+        populi, session = make([FakeResponse(200, {'object': 'person', 'id': 1001})])
 
         person = populi.people.by_student_id('101')
 
-        self.assertEqual(person['id'], 4605662)
+        self.assertEqual(person['id'], 1001)
         self.assertEqual(session.calls[0]['json'], {'student_id': '101'})
 
     def test_unknown_student_is_none_not_an_exception(self):
@@ -381,29 +381,29 @@ class Leads(unittest.TestCase):
             ))]
         )
 
-        self.assertEqual(populi.leads.current(4605662)['id'], 2)
+        self.assertEqual(populi.leads.current(1001)['id'], 2)
 
     def test_current_status_is_none_when_there_is_no_lead(self):
         """No lead means a current student, which callers branch on."""
         populi, _ = make([FakeResponse(200, list_body([], results=0))])
 
-        self.assertIsNone(populi.leads.current_status(4605662))
+        self.assertIsNone(populi.leads.current_status(1001))
 
     def test_set_status_updates_the_resolved_lead(self):
         populi, session = make(
             [
                 FakeResponse(200, list_body(
-                    [{'id': 15249937, 'status': 'accepted', 'active': True}], results=1
+                    [{'id': 800010, 'status': 'accepted', 'active': True}], results=1
                 )),
                 FakeResponse(200, {}),
             ]
         )
 
-        self.assertTrue(populi.leads.set_status(4605662, LeadStatus.CONFIRMED))
+        self.assertTrue(populi.leads.set_status(1001, LeadStatus.CONFIRMED))
 
         write = session.calls[1]
         self.assertEqual(write['method'], 'PUT')
-        self.assertTrue(write['url'].endswith('people/4605662/leads/15249937'))
+        self.assertTrue(write['url'].endswith('people/1001/leads/800010'))
         self.assertEqual(write['json'], {'status': 'confirmed'})
 
     def test_a_legacy_uppercase_status_is_rejected_before_sending(self):
@@ -417,14 +417,14 @@ class Leads(unittest.TestCase):
         populi, session = make([])
 
         with self.assertRaises(PopuliConfigurationError):
-            populi.leads.set_status(4605662, 'CONFIRMED')
+            populi.leads.set_status(1001, 'CONFIRMED')
 
         self.assertEqual(session.calls, [])
 
     def test_set_status_without_a_lead_is_a_no_op(self):
         populi, session = make([FakeResponse(200, list_body([], results=0))])
 
-        self.assertFalse(populi.leads.set_status(4605662, LeadStatus.CONFIRMED))
+        self.assertFalse(populi.leads.set_status(1001, LeadStatus.CONFIRMED))
         self.assertEqual(len(session.calls), 1)
 
 
@@ -440,10 +440,10 @@ class Notes(unittest.TestCase):
         """
         populi, session = make([FakeResponse(200, {'object': 'note', 'id': 1})])
 
-        populi.notes.create(4605662, 'hello')
+        populi.notes.create(1001, 'hello')
 
         self.assertEqual(session.calls[0]['method'], 'POST')
-        self.assertTrue(session.calls[0]['url'].endswith('people/4605662/notes'))
+        self.assertTrue(session.calls[0]['url'].endswith('people/1001/notes'))
         self.assertEqual(session.calls[0]['json'], {'note': 'hello'})
 
 
@@ -452,16 +452,16 @@ class CommunicationPlans(unittest.TestCase):
         """The legacy call took these the other way round."""
         populi, session = make([FakeResponse(200, {})])
 
-        populi.communication_plans.delete(4605662, 998877)
+        populi.communication_plans.delete(1001, 998877)
 
         self.assertTrue(
-            session.calls[0]['url'].endswith('people/4605662/communicationplans/998877')
+            session.calls[0]['url'].endswith('people/1001/communicationplans/998877')
         )
 
     def test_deleting_an_absent_plan_is_not_an_error(self):
         populi, _ = make([FakeResponse(404, error_body(code=404, message='gone'))])
 
-        self.assertFalse(populi.communication_plans.delete(4605662, 998877))
+        self.assertFalse(populi.communication_plans.delete(1001, 998877))
 
 
 if __name__ == '__main__':

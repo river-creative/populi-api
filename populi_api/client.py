@@ -66,7 +66,7 @@ MAX_PAGES = 200
 class PopuliClient:
     """A configured, paced connection to one school's Populi API2.
 
-    ``base_url`` is the full API2 root, e.g. ``https://rbi.populiweb.com/api2/``.
+    ``base_url`` is the full API2 root, e.g. ``https://<school>.populiweb.com/api2/``.
     ``pacer`` defaults to none: a caller states its claim on the shared key
     budget explicitly rather than having one chosen for it.
     """

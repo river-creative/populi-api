@@ -6,7 +6,7 @@ lead it meant. API2 updates a specific lead:
 lead, then update it", and *which* lead is a decision this module has to make
 explicitly rather than inherit.
 
-Verified against the live instance: ``GET /people/4605662/leads`` returns rows
+Verified against the live instance: ``GET /people/1001/leads`` returns rows
 carrying ``id``, ``status`` (e.g. ``'accepted'``), ``active``, ``most_recent``
 and ``person_id``.
 """
