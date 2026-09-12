@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "populi-api"
+version = "1.0.0"
+description = "Shared Populi API2 client for RMI Python applications"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "River Creative" }]
+
+# requests only. The client is deliberately framework-free: nothing here imports
+# Django, and the Django adapter under populi_api/integration/ is opt-in, so
+# installing this does not drag a web framework into a script or a worker.
+dependencies = ["requests>=2.31"]
+
+[project.optional-dependencies]
+django = ["Django>=4.2"]
+
+[project.urls]
+Homepage = "https://populi.co/api/"
+
+[tool.setuptools.packages.find]
+include = ["populi_api*"]
+
+[tool.setuptools.package-data]
+populi_api = ["py.typed"]
