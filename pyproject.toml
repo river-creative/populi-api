@@ -5,13 +5,24 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "populi-api"
 version = "1.0.0"
-description = "A Populi API2 client for Python"
+description = "A Populi API2 client for Python, built around the ways Populi fails open"
 readme = "README.md"
-requires-python = ">=3.11"
-license = { text = "Proprietary" }
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "River Creative" }]
+keywords = ["populi", "sis", "api", "client", "higher-education"]
 
-# requests only. The client is deliberately framework-free: nothing here imports
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Education",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+# requests only. The client is deliberately framework-free: nothing in it imports
 # Django, and the Django adapter under populi_api/integration/ is opt-in, so
 # installing this does not drag a web framework into a script or a worker.
 dependencies = ["requests>=2.31"]
@@ -20,10 +31,11 @@ dependencies = ["requests>=2.31"]
 django = ["Django>=4.2"]
 
 [project.urls]
-Homepage = "https://populi.co/api/"
+Homepage = "https://github.com/river-creative/populi-py"
+Repository = "https://github.com/river-creative/populi-py"
+Changelog = "https://github.com/river-creative/populi-py/blob/main/CHANGELOG.md"
+"Populi API reference" = "https://populi.co/api/"
 
 [tool.setuptools.packages.find]
 include = ["populi_api*"]
-
-[tool.setuptools.package-data]
-populi_api = ["py.typed"]
+exclude = ["populi_api.tests*"]

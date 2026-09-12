@@ -57,6 +57,20 @@ def data_path(person_id, scope, row_id=None):
     return path
 
 
+def term_data_path(person_id, term_id, row_id=None):
+    """Route for a person's TERM-scoped custom info data.
+
+    Keyed on the academic term, not on a field. A sibling client had this as
+    ``custominfodata/student/{fieldId}`` — the student scope, with a field id in
+    the slot the route reserves for a term — so it asked about the wrong scope
+    entirely and could never return the caller's term-scoped rows.
+    """
+    path = 'people/%s/custominfodata/term/%s' % (person_id, term_id)
+    if row_id is not None:
+        path += '/%s' % row_id
+    return path
+
+
 def field_definition_path(scope):
     """Route for a scope's field DEFINITIONS.
 
@@ -207,6 +221,79 @@ class CustomFields:
             return False
 
         return self._write(person_id, field_id, scope, remaining, verify=verify)
+
+    def definitions_for_scope(self, scope):
+        """Every custom info field defined in one scope.
+
+        Straight from the cache the write path already fills, so asking twice
+        costs one request. Use it to discover ids rather than hardcoding them —
+        they are instance-specific.
+        """
+        return list(self.definitions.for_scope(scope).values())
+
+    def definition(self, field_id, scope, include_options=False):
+        """One field's definition, optionally with its answer options.
+
+        Options come **only** from the show route and **only** when asked for.
+        Every index route omits them, so a missing ``options`` key means the
+        expand was not honoured — never that the field has none. That
+        distinction is asserted here rather than left to the caller.
+
+        Each option carries a ``retired`` flag, and retired is not unused: a
+        retired option stays on every record already holding it. Never infer
+        retirement from usage — read the flag.
+        """
+        parameters = {'expand': ['options']} if include_options else None
+        field = self._client.get(
+            '%s/%s/' % (field_definition_path(scope), field_id), parameters
+        )
+
+        if include_options and field.get('options') is None:
+            raise PopuliApiError(
+                'field %s came back without the requested options expansion, so '
+                'the option list is unknown rather than empty' % field_id,
+                status_code=200,
+                endpoint=field_definition_path(scope),
+                populi_type='expand_dropped',
+            )
+
+        return field
+
+    # -- term-scoped data ---------------------------------------------------
+
+    def term_values(self, person_id, term_id, field_id=None):
+        """A person's term-scoped custom info data, optionally for one field."""
+        rows = self._client.list_all(term_data_path(person_id, term_id))
+        if field_id is None:
+            return rows
+        return [r for r in rows if str(r.get('custom_info_field_id')) == str(field_id)]
+
+    def set_term_value(self, person_id, term_id, field_id, value):
+        """Create a term-scoped value."""
+        return self._client.post(
+            term_data_path(person_id, term_id),
+            {'custom_info_field_id': field_id, 'value': value},
+        )
+
+    def update_term_value(self, person_id, term_id, row_id, value):
+        """Update a term-scoped value by its DATA ROW id, not the field id."""
+        return self._client.put(
+            term_data_path(person_id, term_id, row_id), {'value': value}
+        )
+
+    def delete_term_value(self, person_id, term_id, row_id):
+        """Delete a term-scoped row.
+
+        ``term_id`` is not optional and is easy to omit: the route is
+        ``custominfodata/term/{academicterm}/{custominfodata}``, and a sibling
+        client once built it as ``custominfodata/student/{dataId}`` — a
+        different scope, with a data id in the slot that names the term.
+        """
+        try:
+            self._client.delete(term_data_path(person_id, term_id, row_id))
+        except PopuliNotFoundError:
+            return False
+        return True
 
     def delete(self, person_id, field_id, scope):
         """Remove every value a person holds for a field.

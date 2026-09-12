@@ -10,11 +10,11 @@ rather than read in the reference.
 ## Install
 
 ```
-pip install "populi-api @ git+https://github.com/river-creative/populi-py.git@<sha>"
+pip install populi-api
 ```
 
-Pin a commit, not a branch. A branch reference silently changes the dependency on any rebuild,
-which makes a build unable to say which version of a dependency it is running.
+Requires Python 3.9+ and `requests`. Nothing else — the Django adapter is optional and imports
+Django only if you use it.
 
 ## Use
 
@@ -33,7 +33,43 @@ populi.tags.add(person["id"], 700010)
 populi.custom_fields.add_option(person["id"], 900010, "admissions", 500010)
 ```
 
-Resource groups: `people`, `tags`, `custom_fields`, `leads`, `communication_plans`, `notes`.
+### What it covers
+
+| Group | |
+|---|---|
+| `people` | get, list (filtered), `by_student_id`, `by_student_ids` (bulk), `with_role`, update, online payment link |
+| `tags` | list, add, remove |
+| `custom_fields` | read/write per scope, checkbox options, field definitions, term-scoped data |
+| `leads` | list, current, current status, set status |
+| `notes` | list, create |
+| `communication_plans` | list, delete |
+| `academic_terms` | list, get, current |
+| `courses` | offerings, assignments, rosters, grades (set / excuse / clear) |
+| `files` | download, presigned download link, profile picture upload |
+| `data_slicer` | list reports, pull results |
+
+Plus `populi.test_connection()` and `populi.with_pacing(0.8)`.
+
+### Filters
+
+Populi filters **fail open** — a condition it cannot read is discarded and the request answers
+200 with the entire unfiltered list. Build them rather than writing the JSON:
+
+```python
+from populi_api import PopuliFilter
+
+people = populi.people.list(
+    PopuliFilter().all_of().where_custom_field(212516)      # has an answer
+)
+```
+
+`PopuliFilter` refuses an empty filter and an empty group, because Populi ignores both and an
+ignored filter matches everyone. It cannot check a condition *name* against a route, so verify a
+new filter against the live API and confirm the result set actually **narrowed** — a query
+returning more than you expected is the signature of a dropped condition.
+
+The reliable way to discover a shape is Populi's own UI: build the filter on an index page, save
+it as a preset, edit the preset, and use **"Show JSON for API"**.
 
 **Django applications** use the adapter instead, which builds the same object from settings and
 holds it process-wide:
@@ -75,6 +111,12 @@ one succeeds as far as the caller can see while doing nothing it was asked to do
 - **Error objects arrive with HTTP 200.** On a list route that deserializes to an empty `data`
   array — indistinguishable from "no results". Every response is checked for
   `{"object": "error"}` regardless of status.
+- **Assignment grades take POINTS and answer in PERCENT.** Write 1 to a 1-point assignment and
+  Populi replies `grade: 100`, so a verifying read comparing against what it sent fails on every
+  success. Excusing is the *grade* `"E"` — the route also takes an `excused` parameter, returns
+  200, and ignores it.
+- **An `expand` Populi does not recognise is dropped, still answering 200.** A missing `options`
+  key therefore means "not honoured", never "this field has none".
 
 ## Failures
 
@@ -100,6 +142,10 @@ pinned to whichever window it started in.
 
 `utilisation` has no default. The allowance belongs to the key, not to one caller, so a caller
 states the share it is taking rather than taking all of it by omission.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
 
 ## Tests
 

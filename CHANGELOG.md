@@ -21,7 +21,18 @@ with no Django settings configured loads zero `django` modules.
   status, an idempotency-aware retry policy, and paged reads that verify the page echo and refuse
   a short read.
 - **Resource groups** — `people`, `tags`, `custom_fields`, `leads`, `communication_plans`,
-  `notes`.
+  `notes`, `academic_terms`, `courses`, `files`, `data_slicer`.
+- **`PopuliFilter`** — builds the filter envelope and refuses an empty filter or an empty group,
+  both of which Populi ignores. An ignored filter matches everyone, which is the difference
+  between a report about forty people and one about forty thousand. It removes the structural
+  mistakes only; a misspelled condition name is structurally perfect and still discarded, so a
+  new filter still has to be verified against the live API.
+- **`test_connection()`**, which raises rather than returning False — a malformed key, a key for
+  the wrong API, a base URL missing its `/api2/` suffix and an unreachable network are four
+  different problems, and a bare boolean makes them one.
+- **`with_pacing(utilisation)`** — a view claiming a share of the key's budget, sharing the
+  session and credentials. Pacing the process taxes every interactive lookup in order to slow the
+  one bulk job that needed slowing.
 - **`Pacer` / `RateSchedule`** — a minimum interval between request starts, against a budget that
   is re-read per request so a long run widens by itself at the Pacific boundary. `utilisation`
   has no default: the budget belongs to the API key, not to one caller.

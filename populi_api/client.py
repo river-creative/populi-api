@@ -42,7 +42,7 @@ from .errors import (
     PopuliPagingError,
     PopuliRateLimitError,
 )
-from .pacing import NullPacer
+from .pacing import NullPacer, Pacer
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,7 @@ class PopuliClient:
             raise PopuliConfigurationError('access_key is required')
 
         self.base_url = base_url.rstrip('/') + '/'
+        self._access_key = access_key
         self._pacer = pacer or NullPacer()
         self._timeout = timeout
         self._max_retries = max_retries
@@ -99,6 +100,51 @@ class PopuliClient:
                 'Accept': 'application/json',
             }
         )
+
+    # -- shared plumbing, for the routes that are not plain JSON ----------
+    #
+    # File download and the multipart photo upload cannot go through the verbs
+    # below — one returns bytes, the other must let requests write the multipart
+    # boundary. They are still subject to pacing and to the same error
+    # detection, so those two pieces are public rather than reached for through
+    # a private name.
+
+    @property
+    def session(self):
+        """The underlying HTTP session, carrying the auth header."""
+        return self._session
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    def pace(self):
+        """Claim this caller's slot in the key's request budget."""
+        return self._pacer.acquire()
+
+    def error_for(self, response, endpoint):
+        """An exception for this response, or None if it succeeded."""
+        return self._error_for(response, endpoint)
+
+    def with_pacing(self, utilisation):
+        """A view of this client whose requests claim ``utilisation`` of the budget.
+
+        Shares the session, credentials and configuration — a share to claim,
+        not a second client. Mirrors ``WithPacing`` in the .NET client, and
+        exists for the same reason: a bulk job needs slowing down, while an
+        interactive lookup somebody is waiting on does not, and pacing the
+        PROCESS taxes both to slow one.
+        """
+        view = PopuliClient(
+            base_url=self.base_url,
+            access_key=self._access_key,
+            pacer=Pacer(utilisation=utilisation),
+            session=self._session,
+            timeout=self._timeout,
+            max_retries=self._max_retries,
+            sleep=self._sleep,
+        )
+        return view
 
     # -- verbs -----------------------------------------------------------
 

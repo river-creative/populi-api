@@ -35,9 +35,14 @@ from .errors import (
     PopuliPagingError,
     PopuliRateLimitError,
 )
+from .filters import PopuliFilter
 from .resources import (
+    AcademicTerms,
     CommunicationPlans,
+    Courses,
     CustomFields,
+    DataSlicer,
+    Files,
     Leads,
     Notes,
     People,
@@ -47,6 +52,7 @@ from .resources import (
 __all__ = [
     'Populi',
     'PopuliClient',
+    'PopuliFilter',
     'PopuliError',
     'PopuliApiError',
     'PopuliAuthError',
@@ -76,6 +82,26 @@ class Populi:
         self.leads = Leads(client)
         self.communication_plans = CommunicationPlans(client)
         self.notes = Notes(client)
+        self.academic_terms = AcademicTerms(client)
+        self.courses = Courses(client)
+        self.files = Files(client)
+        self.data_slicer = DataSlicer(client)
+
+    def test_connection(self):
+        """Whether the credentials work and the endpoint answers.
+
+        Reads one page of one small route. Returns True or raises — it does not
+        return False, because every reason this can fail is worth seeing: a
+        malformed key, a key for the wrong API, an endpoint missing its /api2/
+        suffix, and "the network is down" are four different problems and a
+        bare False makes them one.
+        """
+        self.client.get('academicterms', {'limit': 1})
+        return True
+
+    def with_pacing(self, utilisation):
+        """A Populi whose requests claim ``utilisation`` of the key's budget."""
+        return Populi(self.client.with_pacing(utilisation))
 
     def __repr__(self):
         return '<Populi %s>' % self.client.base_url
