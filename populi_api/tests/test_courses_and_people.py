@@ -150,6 +150,25 @@ class FieldDefinitions(unittest.TestCase):
         field = populi.custom_fields.definition(900010, 'admissions', include_options=True)
         self.assertEqual(len(field['options']), 1)
 
+    def test_the_show_route_carries_no_trailing_slash(self):
+        """One route, one spelling.
+
+        This call was the only one in the client written with a trailing slash,
+        and it is the spelling that has never been driven against a live
+        instance — the unslashed one has. Nothing asserted the URL, so the two
+        forms coexisted silently. Asserting it is what keeps a future edit from
+        reintroducing the coin flip.
+        """
+        populi, session = make([FakeResponse(200, {
+            'object': 'custom_info_field', 'id': 900010, 'input_type': 'checkbox',
+            'options': [],
+        })])
+
+        populi.custom_fields.definition(900010, 'admissions', include_options=True)
+
+        url = session.calls[0]['url']
+        self.assertTrue(url.endswith('admissionscustominfofields/900010'), url)
+
 
 class Connection(unittest.TestCase):
     def test_test_connection_raises_rather_than_returning_false(self):

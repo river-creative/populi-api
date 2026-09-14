@@ -244,8 +244,12 @@ class CustomFields:
         retirement from usage — read the flag.
         """
         parameters = {'expand': ['options']} if include_options else None
+        # No trailing slash. This was the only call in the client carrying one,
+        # and it is the form that has NOT been driven against a live instance;
+        # the unslashed form has, repeatedly. Two spellings of one route is a
+        # coin flip nobody should have to call at runtime.
         field = self._client.get(
-            '%s/%s/' % (field_definition_path(scope), field_id), parameters
+            '%s/%s' % (field_definition_path(scope), field_id), parameters
         )
 
         if include_options and field.get('options') is None:
