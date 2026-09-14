@@ -1,0 +1,100 @@
+name: Publish
+
+# Tags drive releases. A tag whose name disagrees with the version in
+# pyproject.toml is refused before anything is built -- see the guard in `build`.
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.9 is the floor declared in pyproject.toml and CI is the only place
+        # that floor is ever exercised; 3.13 is what people will actually install on.
+        python-version: ['3.9', '3.13']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run the suite
+        run: python -m unittest discover -s populi_api/tests -t .
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+
+      # PyPI takes the version from the BUILT artifact, never from the tag. Without
+      # this, tagging v1.0.0rc1 against a pyproject that says 1.0.0 uploads 1.0.0 to
+      # TestPyPI, and the later v1.0.0 tag is then rejected there as a duplicate --
+      # which fails the job that gates the real publish. The tag is passed through
+      # the environment rather than interpolated into the script body.
+      - name: Tag must match the declared version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, sys, tomllib
+
+          declared = tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"]
+          tagged = os.environ["TAG"].removeprefix("v")
+          if tagged != declared:
+              sys.exit(f"tag says {tagged!r}, pyproject.toml says {declared!r} -- bump one of them")
+          print(f"tag and pyproject agree on {declared}")
+          PY
+
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install --upgrade build twine
+          python -m build
+          python -m twine check dist/*
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  testpypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      # Mandatory for Trusted Publishing, and granted per-job on purpose: a
+      # workflow-level grant would hand the OIDC token to the job that runs the
+      # test suite as well.
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # TestPyPI is a rehearsal surface; re-running a job on the same tag is
+          # routine and should not fail. Deliberately NOT set on the PyPI job,
+          # where a duplicate means something is wrong and must be loud.
+          skip-existing: true
+
+  pypi:
+    needs: testpypi
+    # Pre-release tags stop at TestPyPI.
+    if: ${{ !contains(github.ref_name, 'rc') }}
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
