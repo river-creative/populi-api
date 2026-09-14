@@ -52,6 +52,12 @@ comment is the thing to argue with.
 3. Add tests covering the behaviour that would be silently wrong, not the happy path.
 4. Update the README table and the CHANGELOG.
 
+## Releasing
+
+Maintainers only, and tag-driven — see [RELEASING.md](RELEASING.md). The rule that catches people
+out is that the tag and the version in `pyproject.toml` must agree exactly; the workflow refuses a
+mismatch before it builds.
+
 ## Reporting something
 
 An issue that names the route, what you sent, and what Populi answered is worth more than a
