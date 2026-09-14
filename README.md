@@ -1,5 +1,10 @@
 # populi-api
 
+[![PyPI](https://img.shields.io/pypi/v/populi-api.svg)](https://pypi.org/project/populi-api/)
+[![Python versions](https://img.shields.io/pypi/pyversions/populi-api.svg)](https://pypi.org/project/populi-api/)
+[![Licence](https://img.shields.io/pypi/l/populi-api.svg)](LICENSE)
+[![Publish](https://github.com/river-creative/populi-api/actions/workflows/publish.yml/badge.svg)](https://github.com/river-creative/populi-api/actions/workflows/publish.yml)
+
 A Populi API2 client for Python.
 
 Populi's API fails open in a number of places — a request it cannot read is answered with
@@ -35,20 +40,31 @@ populi.custom_fields.add_option(person["id"], 900010, "admissions", 500010)
 
 ### What it covers
 
-| Group | |
-|---|---|
-| `people` | get, list (filtered), `by_student_id`, `by_student_ids` (bulk), `with_role`, update, online payment link |
-| `tags` | list, add, remove |
-| `custom_fields` | read/write per scope, checkbox options, field definitions, term-scoped data |
-| `leads` | list, current, current status, set status |
-| `notes` | list, create |
-| `communication_plans` | list, delete |
-| `academic_terms` | list, get, current |
-| `courses` | offerings, assignments, rosters, grades (set / excuse / clear) |
-| `files` | download, presigned download link, profile picture upload |
-| `data_slicer` | list reports, pull results |
+| Group | | Driven live? |
+|---|---|---|
+| `people` | get, list (filtered), `by_student_id`, `by_student_ids` (bulk), `with_role`, update, online payment link | ◐ |
+| `tags` | list, add, remove | ✅ |
+| `custom_fields` | read/write per scope, checkbox options, field definitions, term-scoped data | ◐ |
+| `leads` | list, current, current status, set status | ✅ |
+| `notes` | list, create | ✅ |
+| `communication_plans` | list, delete | ✅ |
+| `academic_terms` | list, get, current | ○ |
+| `courses` | offerings, assignments, rosters, grades (set / excuse / clear) | ○ |
+| `files` | download, presigned download link, profile picture upload | ○ |
+| `data_slicer` | list reports, pull results | ○ |
 
-Plus `populi.test_connection()` and `populi.with_pacing(0.8)`.
+Plus `populi.test_connection()` and `populi.with_pacing(0.8)` — and `PopuliFilter` (○).
+
+**✅ driven against a live instance** through real webhook traffic, which is where the fail-open
+behaviours below were found. **○ written from Populi's documented contract** and unit-tested, but
+never sent to a real server. **◐ mixed** — `people`'s `by_student_id` and the custom-field
+read/write and checkbox paths are proven; `by_student_ids`, `with_role`, `update`, `definition`
+and the term-scoped helpers are not.
+
+This distinction is in the table rather than a footnote because of what the next section says: on
+this API a wrong request is answered with a 200, so "it compiles and the unit tests pass" is
+weaker evidence here than it would be almost anywhere else. If you exercise one of the ○ paths,
+a report saying what Populi actually did is the single most useful contribution available.
 
 ### Filters
 

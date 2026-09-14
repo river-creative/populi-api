@@ -5,12 +5,32 @@ All notable changes to `populi-api` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-14
+
+### Fixed
+- `custom_fields.definition()` requested `…/{field_id}/` with a trailing slash — the only call in
+  the client that did, and the only spelling of that route never driven against a live instance.
+  It now matches the form that has been. Nothing asserted the URL, which is how two spellings of
+  one route coexisted unnoticed; there is now a test that fails on either one changing.
+
+### Changed
+- The verification claim below, which was broader than the evidence. See it for what is measured
+  and what is not.
+
 ## [1.0.0] - 2026-09-14
 
 Extracted from the `rupo` application, where it was written to replace a vendored client for
-Populi's legacy XML API — an API Populi sunset on 2026-08-01. It is 1.0.0 rather than 0.1.0
-because it did not arrive untested: every function was exercised against a live instance through
-real webhook delivery before the extraction, and the behaviours below were measured there.
+Populi's legacy XML API — an API Populi sunset on 2026-08-01.
+
+**What is measured and what is not.** The core lifted out of `rupo` — people, tags, custom fields,
+leads, communication plans, notes — was exercised against a live instance through real webhook
+delivery before the extraction, and every behaviour noted below was measured there. The surface
+added afterwards for parity with the .NET client — `courses`, `files`, `data_slicer`,
+`academic_terms`, `PopuliFilter`, and the term-scoped and definition helpers on `custom_fields` —
+was written from Populi's documented contract and covered by unit tests, but has **not** been
+driven against a live instance. Given how many of the behaviours below are undocumented and
+fail open, treat that half as unproven and verify it against your own instance before relying on
+it. Reports of what it actually does are welcome.
 
 It was built framework-free from the first commit specifically so this extraction would be a
 directory move rather than a rewrite. Verified at the point of extraction: constructing a client
