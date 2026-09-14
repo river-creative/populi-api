@@ -5,7 +5,7 @@ All notable changes to `populi-api` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2026-09-12
+## [1.0.0] - 2026-09-14
 
 Extracted from the `rupo` application, where it was written to replace a vendored client for
 Populi's legacy XML API — an API Populi sunset on 2026-08-01. It is 1.0.0 rather than 0.1.0
