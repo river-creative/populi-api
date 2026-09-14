@@ -31,10 +31,10 @@ dependencies = ["requests>=2.31"]
 django = ["Django>=4.2"]
 
 [project.urls]
-Homepage = "https://github.com/river-creative/populi-py"
-Repository = "https://github.com/river-creative/populi-py"
-Changelog = "https://github.com/river-creative/populi-py/blob/main/CHANGELOG.md"
-Contributing = "https://github.com/river-creative/populi-py/blob/main/CONTRIBUTING.md"
+Homepage = "https://github.com/river-creative/populi-api"
+Repository = "https://github.com/river-creative/populi-api"
+Changelog = "https://github.com/river-creative/populi-api/blob/main/CHANGELOG.md"
+Contributing = "https://github.com/river-creative/populi-api/blob/main/CONTRIBUTING.md"
 "Populi API reference" = "https://populi.co/api/"
 
 [tool.setuptools.packages.find]
