@@ -48,18 +48,23 @@ populi.custom_fields.add_option(person["id"], 900010, "admissions", 500010)
 | `leads` | list, current, current status, set status | ✅ |
 | `notes` | list, create | ✅ |
 | `communication_plans` | list, delete | ✅ |
-| `academic_terms` | list, get, current | ○ |
-| `courses` | offerings, assignments, rosters, grades (set / excuse / clear) | ○ |
-| `files` | download, presigned download link, profile picture upload | ○ |
-| `data_slicer` | list reports, pull results | ○ |
+| `academic_terms` | list, get, current | ✅ |
+| `courses` | offerings, assignments, enrollments | ✅ |
+| `courses` | grades (set / excuse / clear) | ○ |
+| `files` | presigned download link | ✅ |
+| `files` | download bytes, profile picture upload | ○ |
+| `data_slicer` | reports, results | ✅ |
 
-Plus `populi.test_connection()` and `populi.with_pacing(0.8)` — and `PopuliFilter` (○).
+Plus `populi.test_connection()` and `populi.with_pacing(0.8)` — and `PopuliFilter` (✅).
 
-**✅ driven against a live instance** through real webhook traffic, which is where the fail-open
-behaviours below were found. **○ written from Populi's documented contract** and unit-tested, but
-never sent to a real server. **◐ mixed** — `people`'s `by_student_id` and the custom-field
-read/write and checkbox paths are proven; `by_student_ids`, `with_role`, `update`, `definition`
-and the term-scoped helpers are not.
+**✅ driven against a live instance.** **○ written from Populi's documented contract** and
+unit-tested, but never sent to a real server. **◐ mixed** — `people`'s `by_student_id`, `list`
+with expands, and `online_payment_link` are proven, as are the custom-field read/write, checkbox
+and `definition` paths; `by_student_ids`, `with_role`, `update` and the term-scoped write helpers
+are not.
+
+Everything still marked ○ is a **write** or a bulk walk, which is why it is unproven rather than
+untried — verifying those means changing data on somebody's live instance.
 
 This distinction is in the table rather than a footnote because of what the next section says: on
 this API a wrong request is answered with a 200, so "it compiles and the unit tests pass" is
@@ -133,6 +138,16 @@ one succeeds as far as the caller can see while doing nothing it was asked to do
   200, and ignores it.
 - **An `expand` Populi does not recognise is dropped, still answering 200.** A missing `options`
   key therefore means "not honoured", never "this field has none".
+- **A course enrollment's `student_id` is a PERSON id.** Measured: a row reporting
+  `student_id: 24564256` resolves at `GET /people/24564256`, while `by_student_id(24564256)`
+  finds nobody. The rows carry no `person_id` key at all, so the only identifier present is the
+  one whose name describes the other scheme. Pass it straight to the grade routes, which take a
+  person id; never to anything resolving a visible student id, which will find nothing rather
+  than fail.
+- **An expand that IS honoured can still be null.** `expand: ["student"]` on `/people` adds the
+  `student` key to every row and sets it to `null` for non-students. Absent key and null value
+  mean different things — dropped expand versus "this person is not a student" — and only
+  checking for the key distinguishes them.
 
 ## Failures
 

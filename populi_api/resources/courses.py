@@ -55,7 +55,21 @@ class Courses:
         )
 
     def enrollments(self, course_offering_id, expand=None):
-        """The roster for an offering."""
+        """The roster for an offering.
+
+        **A row's ``student_id`` is a PERSON id, not the visible student id.**
+        Measured on a live instance: an enrollment reporting
+        ``student_id: 24564256`` resolves at ``GET /people/24564256``, and
+        ``people.by_student_id(24564256)`` finds nobody — the two numbering
+        schemes are unrelated and the name only matches one of them.
+
+        The rows carry no ``person_id`` key at all, so ``student_id`` is the
+        only identifier available and the mistake is easy to make in both
+        directions. It is the right value to pass straight to
+        :meth:`set_grade`, :meth:`grade` and :meth:`excuse`, all of which take a
+        person id. It is the wrong value to hand to anything resolving a
+        *visible* student id, which will silently find nothing rather than fail.
+        """
         parameters = {'expand': list(expand)} if expand else None
         return self._client.list_all(
             'courseofferings/%s/students' % course_offering_id, parameters

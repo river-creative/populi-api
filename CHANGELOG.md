@@ -5,6 +5,35 @@ All notable changes to `populi-api` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-14
+
+Most of the surface that shipped in 1.0.0 as contract-only has now been driven against a live
+instance. No code changed as a result — the routes behaved as written — but two undocumented
+behaviours turned up that callers need, and the coverage table in the README now reflects what is
+actually proven rather than what was intended.
+
+### Documented, each measured rather than inferred
+- **A course enrollment's `student_id` is a PERSON id.** A row reporting `student_id: 24564256`
+  resolves at `GET /people/24564256`; `by_student_id(24564256)` finds nobody. The rows carry no
+  `person_id` at all, so the only identifier present is named after the scheme it does not belong
+  to. It is the correct argument for the grade routes and the wrong one for anything resolving a
+  visible student id, which finds nothing rather than failing.
+- **An honoured `expand` can still be null.** `expand: ["student"]` adds the key to every
+  `/people` row and sets it to `null` for non-students, which is a different thing from the key
+  being absent because the expand was dropped.
+- **`people.with_role()` walks every page.** On a role the size of Student that is thousands of
+  people and dozens of requests against a budget shared with everything else using the key.
+
+### Verified live
+`academic_terms` (list/get/current), `courses` (offerings/assignments/enrollments), `data_slicer`
+(reports/results), `files.download_link`, `people.online_payment_link`, `people.list` with
+expands, `custom_fields.definitions_for_scope` and `definition()` including the options expand,
+and `PopuliFilter` — the last confirmed by checking that a negated condition and its positive
+partition the directory exactly (2,843 + 27,596 = 30,439), which a dropped filter cannot do.
+
+Still unproven, and marked ○ in the README: the grade writes, file upload, term-scoped writes,
+`people.update` and `by_student_ids`. Every one of them is a write or a bulk walk.
+
 ## [1.0.1] - 2026-09-14
 
 ### Fixed

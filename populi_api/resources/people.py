@@ -131,6 +131,10 @@ class People:
 
         return found
 
+    # Walks every page: `with_role` on a large role such as Student is
+    # thousands of people and dozens of requests against a 50/min budget shared
+    # with everything else using this key. Reach for it when you genuinely want
+    # the whole set, and pace the caller if you do.
     def with_role(self, role_id, status='ACTIVE'):
         """Everyone holding a role.
 
