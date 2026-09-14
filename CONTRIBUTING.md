@@ -9,10 +9,15 @@ as the project — that is [section 5](LICENSE) of the licence and requires noth
 ## Running the tests
 
 ```
+python -m pip install .
 python -m unittest discover -s populi_api/tests -t .
 ```
 
-No Django, no network, no test runner beyond the standard library. They should stay that way: a
+The install supplies `requests`, which the package imports at module scope — skip it on a fresh
+clone and the suite fails to import rather than failing a test.
+
+Beyond that: no Django, no network, no test runner beyond the standard library. They should stay
+that way: a
 client that needs a framework or an internet connection to test is one nobody runs the tests for.
 
 ## The one rule that matters

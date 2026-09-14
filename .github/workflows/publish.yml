@@ -20,6 +20,17 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+      # Install from pyproject rather than naming dependencies here. A dependency
+      # that is declared nowhere then fails the suite, instead of passing because
+      # the machine happened to have it installed for another reason. Not
+      # hypothetical: this job failed on `requests` the first time it ran, having
+      # passed on a workstation that had it system-wide -- the same way an
+      # undeclared `certifi` once reached production from this client's source.
+      - name: Install the package and its declared dependencies
+        run: python -m pip install .
+
+      # cwd precedes site-packages on sys.path, so this exercises the source tree.
+      # The tests are deliberately not shipped in the wheel.
       - name: Run the suite
         run: python -m unittest discover -s populi_api/tests -t .
 
